@@ -1,0 +1,65 @@
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+import os
+import time
+import pyautogui
+
+# Rutas y coordenadas (sin cambios)
+archivo_cuentas = "xxxxxxxxxxxxxxxxxxx" #Modificar según tus parámetros
+archivo_errores = "xxxxxxxxxxxxxxxxxxx" #Modificar según tus parámetros
+coordenadas_siguiendo = (567, 181) 
+coordenadas_dejar_de_seguir = (357, 743)
+directorio_controlador_edge = r'F:\xxx\msedgedriver.exe' #Modificar según tus parámetros
+os.environ['PATH'] += os.pathsep + directorio_controlador_edge
+
+# Crea una instancia del navegador Microsoft Edge controlado por Selenium
+driver = webdriver.Edge()
+
+# Leer las cuentas desde el archivo
+with open(archivo_cuentas, 'r') as file:
+    cuentas_a_dejar_de_seguir = [line.strip() for line in file]
+
+# Variable booleana para saber si es la primera iteración
+primera_iteracion = True
+
+# Iterar sobre la lista y navegar a la página de perfil de Instagram para cada cuenta
+for cuenta in cuentas_a_dejar_de_seguir:
+    try:
+        # Navega a la página de perfil de Instagram
+        driver.get(f"https://www.instagram.com/{cuenta}/")
+
+        # Espera hasta que la página cargue completamente (ajusta según sea necesario)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
+
+        # Espera antes de hacer clic con pyautogui
+        time.sleep(3)
+
+        # Pausa y muestra el mensaje solo en la primera iteración
+        if primera_iteracion:
+            input(f'Por favor, inicia sesión manualmente en Instagram para la cuenta {cuenta}. Cuando estés listo, presiona Enter para continuar...')
+            primera_iteracion = False  # Cambia la variable para que no entre en este bloque en las iteraciones posteriores
+
+        # Hacer clic en el botón "Siguiendo"
+        pyautogui.click(*coordenadas_siguiendo)
+        print(f'Haz clic en "Siguiendo" para {cuenta}.')
+
+        # Espera un momento para que aparezca el menú desplegable
+        time.sleep(0.7)
+
+        # Hacer clic en el botón "Dejar de seguir"
+        pyautogui.click(*coordenadas_dejar_de_seguir)
+        print(f'Se ha dejado de seguir a {cuenta}.')
+
+        # Espera un momento antes de pasar a la siguiente cuenta
+        time.sleep(2)
+
+    except Exception as e:
+        print(f'Error al navegar a la página de {cuenta}: {e}')
+        # Registra el error en el archivo de errores
+        with open(archivo_errores, 'a') as errores_file:
+            errores_file.write(f'Error al dejar de seguir a {cuenta}: {e}\n')
+
+# Cierra el navegador
+driver.quit()
